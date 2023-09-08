@@ -1,0 +1,22 @@
+{
+  "name": "chatapp",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.33.1",
+    "dotenv": "^16.0.3",
+    "express": "^4.17.1",
+    "fcm-node": "^1.6.1",
+    "firebase": "^9.18.0",
+    "jsonwebtoken": "^9.0.0",
+    "socket.io": "^4.6.1"
+  }
+}
