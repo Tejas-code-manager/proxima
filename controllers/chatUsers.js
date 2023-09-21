@@ -1,10 +1,25 @@
 const { createClient } = require("@supabase/supabase-js");
-
+const axios = require("axios");
+const admin = require("firebase-admin");
+const path = require("path");
 // Create a single supabase client for interacting with your database
+const jsonCredPath = path.join(
+  __dirname,
+  "proxima-35839-firebase-adminsdk-jpc6h-448dc0bd30.json"
+);
+console.log("act_path ===> ", jsonCredPath);
+const serviceAccount = require(`${jsonCredPath}`);
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+  // Other options if needed
+});
 const supabase = createClient(
   "https://omjzrytfflkyjpsfakhj.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9tanpyeXRmZmxreWpwc2Zha2hqIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTM4NTQ0MjksImV4cCI6MjAwOTQzMDQyOX0.FhD4L7nJRMbq9Vs61q_8EhblyzoKO75PcLLp3vDzLK0"
 );
+
+// D:\chatApp\proxima-35839-firebase-adminsdk-jpc6h-448dc0bd30.json
 
 const fs = require("fs");
 const util = require("util");
@@ -21,8 +36,7 @@ const util = require("util");
 // };
 // firebase.initializeApp(firebaseConfig);
 const FCM = require("fcm-node");
-const serverKey =
-  "AAAAQVTxZPo:APA91bFUB2TKisdnbIyeFwd4c41k0Ef2GrpATbDFdJCk-DpjmLtzhTxzLWKVJgK044dd6Z6FuUQNbVcKe69bMep9i6-n26112dq_F45cZGbUv436JoEGA5HcmHdBBvc9FU5dqeouRY7_"; //put your server key here
+const serverKey = "20765c7abadf3d90c398bfca099649a3e7215c7a"; //put your server key here
 const fcm = new FCM(serverKey);
 
 const sendNotifications = async (req, res) => {
@@ -31,9 +45,42 @@ const sendNotifications = async (req, res) => {
       return res.status(200).send("All input is required");
     }
 
-    let userDetails = await User.findOne({ _id: req.user_id });
-    let senderdetails = await User.findOne({ _id: req.sender_id });
+    const registrationToken =
+      "cIgXx1WRSsSvqyRaf8n73R:APA91bGyREVaBX1ZP0eSAKdeMjRzqSa9wsRRbnh9q2PxgGIb_NjrqWAIBofwFEdYJJX3kUmE2zpoH0giSdq3JpBk46IVHoQQP5vqocfAGPHdrbBs25XbXo6YfLZDfl2HV5WzfguNhpOp";
 
+    const message = {
+      notification: {
+        title: req.title,
+        body: req.description,
+      },
+
+      token: registrationToken,
+    };
+
+    admin
+      .messaging()
+      .send(message)
+      .then((response) => {
+        console.log("Successfully sent message:", response);
+      })
+      .catch((error) => {
+        console.log("Error sending message:", error);
+      });
+
+    // let userDetails = await User.findOne({ _id: req.user_id });
+    // let senderdetails = await User.findOne({ _id: req.sender_id });
+
+    let userDetails = await supabase
+      .from("users")
+      .select()
+      .eq("id", req.user_id);
+
+    let senderdetails = await supabase
+      .from("users")
+      .select()
+      .eq("id", req.sender_id);
+
+    console.log("userDetails ===> ", userDetails);
     // const { data, error } = await supabase
     //   .from("users")
     //   .select()
@@ -41,12 +88,12 @@ const sendNotifications = async (req, res) => {
     //     `to_id.eq.${to_id},user_id.eq.${user_id},to_id.eq.${user_id},user_id.eq.${to_id}`
     //   );
 
-    console.log("userdetails :" + req.title);
+    // console.log("userdetails :" + req.title);
 
     if (userDetails) {
       let message = {
         //this may vary according to the message type (single recipient, multicast, topic, et cetera)
-        to: userDetails.firebase_token,
+        to: userDetails?.data[0]?.firebase_token,
 
         notification: {
           title: `${req.title}`,
@@ -57,21 +104,25 @@ const sendNotifications = async (req, res) => {
           //you can send only notification or only data(or include both)
           page: `${req.page}`,
           extradata: {
-            userid: senderdetails._id,
-            name: senderdetails.name,
+            userid: senderdetails?.data[0]?.id,
+            name: senderdetails?.data[0]?.name,
           },
         },
       };
 
-      fcm.send(message, function (err, response) {
-        if (err) {
-          //   console.log("Something has gone wrong!");
-          return { status: 0, message: err, data: [] };
-        } else {
-          //   console.log("Successfully sent with response: ", response);
-          return { status: 1, message: "Notification sent", data: response };
-        }
-      });
+      let pushNotify = await axios.post(
+        "https://fcm.googleapis.com/v1/projects/proxima-35839/messages:send"
+      );
+
+      // fcm.send(message, function (err, response) {
+      //   if (err) {
+      //     console.log("Something has gone wrong!", err);
+      //     return { status: 0, message: err, data: [] };
+      //   } else {
+      //     // console.log("Successfully sent with response: ", response);
+      //     return { status: 1, message: "Notification sent", data: response };
+      //   }
+      // });
     }
   } catch (err) {
     return { status: 1, message: "not send..error", data: [] };
@@ -127,16 +178,16 @@ const addChats = async (req, res) => {
     if (createChat) {
       //   let senderdata = await User.findOne({ _id: user_id });
       let senderdata = await supabase.from("users").select().eq("id", user_id);
-      console.log(senderdata);
-      //   if (senderdata) {
-      //     await sendNotifications({
-      //       user_id: recevier_id,
-      //       sender_id: user_id,
-      //       description: `${message}`,
-      //       title: `You have a new message from ${senderdata.name} 💬`,
-      //       page: `CHATDETAILS`,
-      //     });
-      //   }
+      // console.log(senderdata?.data[0]);
+      if (senderdata) {
+        await sendNotifications({
+          user_id: to_id,
+          sender_id: user_id,
+          description: `${message}`,
+          title: `You have a new message from ${senderdata?.data[0]?.name} 💬`,
+          page: `CHATDETAILS`,
+        });
+      }
 
       return res.status(200).json({
         status: 1,
