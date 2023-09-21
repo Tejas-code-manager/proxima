@@ -7,7 +7,7 @@ const jsonCredPath = path.join(
   __dirname,
   "proxima-35839-firebase-adminsdk-jpc6h-448dc0bd30.json"
 );
-console.log("act_path ===> ", jsonCredPath);
+
 const serviceAccount = require(`${jsonCredPath}`);
 
 admin.initializeApp({
@@ -45,28 +45,6 @@ const sendNotifications = async (req, res) => {
       return res.status(200).send("All input is required");
     }
 
-    const registrationToken =
-      "cIgXx1WRSsSvqyRaf8n73R:APA91bGyREVaBX1ZP0eSAKdeMjRzqSa9wsRRbnh9q2PxgGIb_NjrqWAIBofwFEdYJJX3kUmE2zpoH0giSdq3JpBk46IVHoQQP5vqocfAGPHdrbBs25XbXo6YfLZDfl2HV5WzfguNhpOp";
-
-    const message = {
-      notification: {
-        title: req.title,
-        body: req.description,
-      },
-
-      token: registrationToken,
-    };
-
-    admin
-      .messaging()
-      .send(message)
-      .then((response) => {
-        console.log("Successfully sent message:", response);
-      })
-      .catch((error) => {
-        console.log("Error sending message:", error);
-      });
-
     // let userDetails = await User.findOne({ _id: req.user_id });
     // let senderdetails = await User.findOne({ _id: req.sender_id });
 
@@ -80,50 +58,64 @@ const sendNotifications = async (req, res) => {
       .select()
       .eq("id", req.sender_id);
 
-    console.log("userDetails ===> ", userDetails);
-    // const { data, error } = await supabase
-    //   .from("users")
-    //   .select()
-    //   .eq(
-    //     `to_id.eq.${to_id},user_id.eq.${user_id},to_id.eq.${user_id},user_id.eq.${to_id}`
-    //   );
+    console.log("senderdetails ===> ", req.page);
 
-    // console.log("userdetails :" + req.title);
+    const registrationToken = userDetails["data"][0]["firebase_token"];
 
-    if (userDetails) {
-      let message = {
-        //this may vary according to the message type (single recipient, multicast, topic, et cetera)
-        to: userDetails?.data[0]?.firebase_token,
+    const message = {
+      notification: {
+        title: req.title,
+        body: req.description,
+      },
+      data: {
+        //you can send only notification or only data(or include both)
+        page: `${req.page}`,
+        // extradata: {
+        //   userid: `${userDetails["data"][0]["id"]}`,
+        //   name: `${senderdetails["data"][0]["name"]}`,
+        //   to_id: `${senderdetails["data"][0]["id"]}`,
+        //   key1: "value1",
+        // },
+        extradata: JSON.stringify({
+          userid: userDetails["data"][0]["id"],
+          name: senderdetails["data"][0]["name"],
+          to_id: senderdetails["data"][0]["id"],
+          key1: "value1",
+        }),
+      },
+      token: registrationToken,
+    };
 
-        notification: {
-          title: `${req.title}`,
-          body: `${req.description}`,
-        },
+    admin
+      .messaging()
+      .send(message)
+      .then((response) => {
+        console.log("Successfully sent message:", response);
+      })
+      .catch((error) => {
+        console.log("Error sending message:", error);
+      });
 
-        data: {
-          //you can send only notification or only data(or include both)
-          page: `${req.page}`,
-          extradata: {
-            userid: senderdetails?.data[0]?.id,
-            name: senderdetails?.data[0]?.name,
-          },
-        },
-      };
+    // if (userDetails) {
+    //   let message = {
+    //     //this may vary according to the message type (single recipient, multicast, topic, et cetera)
+    //     to: userDetails?.data[0]?.firebase_token,
 
-      let pushNotify = await axios.post(
-        "https://fcm.googleapis.com/v1/projects/proxima-35839/messages:send"
-      );
+    //     notification: {
+    //       title: `${req.title}`,
+    //       body: `${req.description}`,
+    //     },
 
-      // fcm.send(message, function (err, response) {
-      //   if (err) {
-      //     console.log("Something has gone wrong!", err);
-      //     return { status: 0, message: err, data: [] };
-      //   } else {
-      //     // console.log("Successfully sent with response: ", response);
-      //     return { status: 1, message: "Notification sent", data: response };
-      //   }
-      // });
-    }
+    //     data: {
+    //       //you can send only notification or only data(or include both)
+    //       page: `${req.page}`,
+    //       extradata: {
+    //         userid: senderdetails?.data[0]?.id,
+    //         name: senderdetails?.data[0]?.name,
+    //       },
+    //     },
+    //   };
+    // }
   } catch (err) {
     return { status: 1, message: "not send..error", data: [] };
   }
@@ -184,6 +176,7 @@ const addChats = async (req, res) => {
           user_id: to_id,
           sender_id: user_id,
           description: `${message}`,
+          // page: "CHATDETAILS",
           title: `You have a new message from ${senderdata?.data[0]?.name} 💬`,
           page: `CHATDETAILS`,
         });
