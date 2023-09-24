@@ -216,7 +216,19 @@ const removeProfilePic = async (req, res, next) => {
   try {
     let { pic_id } = req.body;
 
-    let destroyProfilePic = await cloudinary.uploader.destroy(`${pic_id}`);
+    pic_id = pic_id.split("/");
+
+    // let pic_id8 = pic_id[8];
+
+    let finalPicId = pic_id[7] + "/" + pic_id[8];
+    finalPicId = finalPicId.split(".");
+    let finalPicIdData = finalPicId[0];
+
+    console.log("final ===> ", finalPicIdData);
+
+    let destroyProfilePic = await cloudinary.uploader.destroy(
+      `${finalPicIdData}`
+    );
 
     if (destroyProfilePic) {
       return res.status(200).json({
