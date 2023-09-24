@@ -2,6 +2,14 @@ const { createClient } = require("@supabase/supabase-js");
 const axios = require("axios");
 const admin = require("firebase-admin");
 const path = require("path");
+const cloudinary = require("cloudinary").v2;
+
+cloudinary.config({
+  cloud_name: "dsb6hxs2q",
+  api_key: "332881871931773",
+  api_secret: "7FVQNp0lXZ5XipPVOhqoDcu0WuA",
+});
+
 // Create a single supabase client for interacting with your database
 const jsonCredPath = path.join(
   __dirname,
@@ -204,7 +212,37 @@ const addChats = async (req, res) => {
   }
 };
 
+const removeProfilePic = async (req, res, next) => {
+  try {
+    let { pic_id } = req.body;
+
+    let destroyProfilePic = await cloudinary.uploader.destroy(`${pic_id}`);
+
+    if (destroyProfilePic) {
+      return res.status(200).json({
+        status: 1,
+        message: "Success",
+        data: destroyProfilePic,
+      });
+    } else {
+      return res.status(200).json({
+        status: 0,
+        message: "Failed",
+        data: [],
+      });
+    }
+  } catch (err) {
+    console.log(err.message);
+    return res.status(200).json({
+      status: 0,
+      message: err.message,
+      data: [],
+    });
+  }
+};
+
 module.exports = {
   getmychats,
   addChats,
+  removeProfilePic,
 };

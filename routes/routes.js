@@ -10,4 +10,7 @@ router.post("/addChats", chatUsersController.addChats);
 // getmychats
 router.post("/getmychats", chatUsersController.getmychats);
 
+//remove profile pic
+router.post("/removeprofilepic", chatUsersController.removeProfilePic);
+
 module.exports = router;
