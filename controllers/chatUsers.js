@@ -253,8 +253,46 @@ const removeProfilePic = async (req, res, next) => {
   }
 };
 
+const getChatUser = async (req, res, next) => {
+  try {
+    let { user_id } = req.body;
+
+    if (!user_id) {
+      return res.status(200).json({
+        status: 0,
+        message: "User id is required",
+        data: [],
+      });
+    }
+
+    // Fetch users a particular user is following
+
+    let followerUsers = await supabase
+      .from("followers")
+      .select("to_id")
+      .eq("user_id", user_id);
+
+    // Fetch users who are following a particular user
+    let followingUsers = await supabase
+      .from("followers")
+      .select("user_id")
+      .eq("to_id", user_id);
+
+    // console.log(followerUsers);
+    // console.log(followingUsers);
+  } catch (err) {
+    console.log(err.message);
+    return res.status(200).json({
+      status: 0,
+      message: err.message,
+      data: [],
+    });
+  }
+};
+
 module.exports = {
   getmychats,
   addChats,
   removeProfilePic,
+  getChatUser,
 };
