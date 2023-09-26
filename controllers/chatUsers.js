@@ -171,7 +171,7 @@ const addChats = async (req, res) => {
     let createChat = await supabase.from("chats").insert({
       to_id: to_id,
       message: message,
-      user_id: user_id,
+      from_id: user_id,
       type: messageType,
       created_at: new Date(),
     });
@@ -267,17 +267,31 @@ const getChatUser = async (req, res, next) => {
 
     // Fetch users a particular user is following
 
-    let followerUsers = await supabase
-      .from("followers")
+    // let followerUsers = await supabase
+    //   .from("followers")
+    //   .select("to_id")
+    //   .eq("user_id", user_id);
+
+    // // Fetch users who are following a particular user
+    // let followingUsers = await supabase
+    //   .from("followers")
+    //   .select("user_id")
+    //   .eq("to_id", user_id);
+
+    let messagedUser = await supabase
+      .from("chats")
       .select("to_id")
-      .eq("user_id", user_id);
+      .eq(`user_id.eq.${user_id}`);
 
-    // Fetch users who are following a particular user
-    let followingUsers = await supabase
-      .from("followers")
-      .select("user_id")
-      .eq("to_id", user_id);
+    // to_id.eq.${user_id}
 
+    let messageSenderUser = await supabase
+      .from("chats")
+      .select("")
+      .eq(`to_id.eq.${user_id}`);
+
+    console.log("messagedUser", messagedUser);
+    console.log("messageSenderUser", messageSenderUser);
     // console.log(followerUsers);
     // console.log(followingUsers);
   } catch (err) {
