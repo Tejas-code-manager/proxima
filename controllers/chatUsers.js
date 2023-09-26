@@ -281,19 +281,31 @@ const getChatUser = async (req, res, next) => {
     let messagedUser = await supabase
       .from("chats")
       .select("to_id")
-      .eq(`user_id.eq.${user_id}`);
+      .eq("from_id", user_id);
 
     // to_id.eq.${user_id}
 
     let messageSenderUser = await supabase
       .from("chats")
-      .select("")
-      .eq(`to_id.eq.${user_id}`);
+      .select("from_id")
+      .eq("to_id", user_id);
 
-    console.log("messagedUser", messagedUser);
-    console.log("messageSenderUser", messageSenderUser);
-    // console.log(followerUsers);
-    // console.log(followingUsers);
+    let userArray = [];
+    messagedUser["data"].forEach((element) => {
+      userArray.push(element["to_id"]);
+    });
+    messageSenderUser["data"].forEach((element) => {
+      userArray.push(element["from_id"]);
+    });
+
+    let userArraySet = [...new Set(userArray)];
+
+    console.log(userArraySet);
+    return res.status(200).json({
+      status: 1,
+      message: "Success",
+      data: userArraySet,
+    });
   } catch (err) {
     console.log(err.message);
     return res.status(200).json({
