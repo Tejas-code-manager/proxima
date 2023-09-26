@@ -265,19 +265,6 @@ const getChatUser = async (req, res, next) => {
       });
     }
 
-    // Fetch users a particular user is following
-
-    // let followerUsers = await supabase
-    //   .from("followers")
-    //   .select("to_id")
-    //   .eq("user_id", user_id);
-
-    // // Fetch users who are following a particular user
-    // let followingUsers = await supabase
-    //   .from("followers")
-    //   .select("user_id")
-    //   .eq("to_id", user_id);
-
     let messagedUser = await supabase
       .from("chats")
       .select("to_id")
@@ -300,11 +287,17 @@ const getChatUser = async (req, res, next) => {
 
     let userArraySet = [...new Set(userArray)];
 
-    console.log(userArraySet);
+    let selectUsers = await supabase
+      .from("users")
+      .select()
+      .in("id", userArraySet);
+
+    // console.log(userArraySet);
+
     return res.status(200).json({
       status: 1,
       message: "Success",
-      data: userArraySet,
+      data: selectUsers["data"],
     });
   } catch (err) {
     console.log(err.message);
