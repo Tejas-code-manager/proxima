@@ -138,7 +138,7 @@ const getmychats = async (req, res) => {
       //   .or(`to_id.eq.${to_id},user_id.eq.${user_id}`)
       //   .or(`to_id.eq.${user_id},user_id.eq.${to_id}`);
       .filter("to_id", "in", `(${to_id},${user_id})`)
-      .filter("user_id", "in", `(${user_id},${to_id})`);
+      .filter("from_id", "in", `(${user_id},${to_id})`);
 
     if (data && data.length > 0) {
       return res.status(200).json({
